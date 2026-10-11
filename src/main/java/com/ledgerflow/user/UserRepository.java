@@ -1,6 +1,5 @@
-package com.ledgerflow;
+package com.ledgerflow.user;
 
-import com.ledgerflow.user.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface UserRepository extends JpaRepository<User, Long> {
