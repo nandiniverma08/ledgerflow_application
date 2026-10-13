@@ -1,7 +1,10 @@
 package com.ledgerflow.auth;
 
 import com.ledgerflow.auth.dto.RegisterRequest;
+import com.ledgerflow.common.dto.ApiResponse;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,11 +21,18 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public String register(
+    public ResponseEntity<ApiResponse<Void>> register(
             @Valid @RequestBody RegisterRequest request) {
 
         authService.register(request);
 
-        return "User registered successfully";
+        ApiResponse<Void> response = ApiResponse.success(
+                "User registered successfully",
+                null
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(response);
     }
 }

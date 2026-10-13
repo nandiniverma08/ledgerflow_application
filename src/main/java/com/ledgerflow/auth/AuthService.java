@@ -6,6 +6,7 @@ import com.ledgerflow.user.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import com.ledgerflow.common.exception.EmailAlreadyRegisteredException;
 
 @Service
 public class AuthService {
@@ -21,7 +22,7 @@ public class AuthService {
     public void register(RegisterRequest request) {
 
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new IllegalArgumentException(
+            throw new EmailAlreadyRegisteredException(
                     "Email is already registered"
             );
         }
