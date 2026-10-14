@@ -1,12 +1,16 @@
 package com.ledgerflow.auth;
 
+import com.ledgerflow.auth.dto.LoginRequest;
 import com.ledgerflow.auth.dto.RegisterRequest;
+import com.ledgerflow.common.exception.InvalidCredentialsException;
 import com.ledgerflow.user.User;
 import com.ledgerflow.user.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import com.ledgerflow.common.exception.EmailAlreadyRegisteredException;
+
+import java.util.Optional;
 
 @Service
 public class AuthService {
@@ -37,5 +41,31 @@ public class AuthService {
         );
 
         userRepository.save(user);
+    }
+
+    public void login(LoginRequest request) {
+
+        Optional<User> optionalUser =
+                userRepository.findByEmail(request.getEmail());
+
+        if (optionalUser.isEmpty()) {
+            throw new InvalidCredentialsException(
+                    "Invalid email or password"
+            );
+        }
+
+        User user = optionalUser.get();
+
+        boolean passwordMatches = passwordEncoder.matches(
+                request.getPassword(),
+                user.getPasswordHash()
+        );
+
+        if (!passwordMatches) {
+            throw new InvalidCredentialsException(
+                    "Invalid email or password"
+            );
+        }
+
     }
 }

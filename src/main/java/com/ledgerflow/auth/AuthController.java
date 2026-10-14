@@ -1,5 +1,6 @@
 package com.ledgerflow.auth;
 
+import com.ledgerflow.auth.dto.LoginRequest;
 import com.ledgerflow.auth.dto.RegisterRequest;
 import com.ledgerflow.common.dto.ApiResponse;
 import jakarta.validation.Valid;
@@ -34,5 +35,20 @@ public class AuthController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(response);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<ApiResponse<Void>> login(
+            @Valid @RequestBody LoginRequest request) {
+
+        authService.login(request);
+
+        ApiResponse<Void> response = ApiResponse.success(
+                "Login successful",
+                null
+        );
+
+        return ResponseEntity.ok(response);
+
     }
 }
