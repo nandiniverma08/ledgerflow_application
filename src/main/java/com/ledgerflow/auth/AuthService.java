@@ -1,14 +1,15 @@
+
 package com.ledgerflow.auth;
 
 import com.ledgerflow.auth.dto.LoginRequest;
 import com.ledgerflow.auth.dto.RegisterRequest;
+import com.ledgerflow.common.exception.EmailAlreadyRegisteredException;
 import com.ledgerflow.common.exception.InvalidCredentialsException;
+import com.ledgerflow.security.JwtService;
 import com.ledgerflow.user.User;
 import com.ledgerflow.user.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-import com.ledgerflow.common.exception.EmailAlreadyRegisteredException;
 
 import java.util.Optional;
 
@@ -17,9 +18,14 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
-    public AuthService(UserRepository userRepository) {
+    public AuthService(
+            UserRepository userRepository,
+            JwtService jwtService) {
+
         this.userRepository = userRepository;
+        this.jwtService = jwtService;
         this.passwordEncoder = new BCryptPasswordEncoder();
     }
 
@@ -43,7 +49,7 @@ public class AuthService {
         userRepository.save(user);
     }
 
-    public void login(LoginRequest request) {
+    public String login(LoginRequest request) {
 
         Optional<User> optionalUser =
                 userRepository.findByEmail(request.getEmail());
@@ -67,5 +73,6 @@ public class AuthService {
             );
         }
 
+        return jwtService.generateToken(user.getEmail());
     }
 }

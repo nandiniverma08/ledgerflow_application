@@ -38,14 +38,14 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<Void>> login(
+    public ResponseEntity<ApiResponse<String>> login(
             @Valid @RequestBody LoginRequest request) {
 
-        authService.login(request);
+        String token = authService.login(request);
 
-        ApiResponse<Void> response = ApiResponse.success(
+        ApiResponse<String> response = ApiResponse.success(
                 "Login successful",
-                null
+                token
         );
 
         return ResponseEntity.ok(response);
