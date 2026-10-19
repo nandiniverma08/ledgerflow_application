@@ -5,11 +5,10 @@ import com.ledgerflow.user.User;
 import com.ledgerflow.user.UserRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/accounts")
@@ -35,5 +34,17 @@ public class AccountController {
                         HttpStatus.NOT_FOUND, "User not found"));
 
         return accountService.createAccount(user);
+    }
+
+    @GetMapping
+    public List<AccountResponse> getMyAccounts(Authentication authentication) {
+        String email = authentication.getName();
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "User not found"
+                ));
+
+        return accountService.getMyAccounts(user);
     }
 }

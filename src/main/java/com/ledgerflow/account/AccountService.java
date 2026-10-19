@@ -6,7 +6,9 @@ import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class AccountService {
@@ -40,5 +42,16 @@ public class AccountService {
                 .toString()
                 .replace("-", "")
                 .substring(0, 16);
+    }
+
+    public List<AccountResponse> getMyAccounts(User user) {
+        return accountRepository.findByUser(user)
+                .stream()
+                .map(account -> new AccountResponse(
+                        account.getAccountNumber(),
+                        account.getBalance(),
+                        account.getStatus()
+                ))
+                .collect(Collectors.toList());
     }
 }
