@@ -3,7 +3,9 @@ package com.ledgerflow.account;
 import com.ledgerflow.account.dto.AccountResponse;
 import com.ledgerflow.user.User;
 import jakarta.transaction.Transactional;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -53,5 +55,23 @@ public class AccountService {
                         account.getStatus()
                 ))
                 .collect(Collectors.toList());
+    }
+
+    public AccountResponse getAccountByNumber(
+            String accountNumber,
+            User user
+    ) {
+        Account account = accountRepository
+                .findByAccountNumberAndUser(accountNumber, user)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Account not found"
+                ));
+
+        return new AccountResponse(
+                account.getAccountNumber(),
+                account.getBalance(),
+                account.getStatus()
+        );
     }
 }

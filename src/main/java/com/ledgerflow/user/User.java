@@ -54,4 +54,8 @@ public class User {
         updatedAt = Instant.now();
     }
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private Role role = Role.CUSTOMER;
+
 }

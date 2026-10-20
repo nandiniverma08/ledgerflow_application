@@ -47,4 +47,20 @@ public class AccountController {
 
         return accountService.getMyAccounts(user);
     }
+
+    @GetMapping("/{accountNumber}")
+    public AccountResponse getAccountByNumber(
+            @PathVariable String accountNumber,
+            Authentication authentication
+    ) {
+        String email = authentication.getName();
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "User not found"
+                ));
+
+        return accountService.getAccountByNumber(accountNumber, user);
+    }
 }
