@@ -41,4 +41,19 @@ public class BeneficiaryController {
 
         return beneficiaryService.createBeneficiary(user, request);
     }
+
+    @GetMapping
+    public java.util.List<BeneficiaryResponse> getBeneficiaries(
+            Authentication authentication
+    ) {
+        String email = authentication.getName();
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "User not found"
+                ));
+
+        return beneficiaryService.getBeneficiaries(user);
+    }
 }

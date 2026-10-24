@@ -3,10 +3,12 @@ package com.ledgerflow.beneficiary;
 import com.ledgerflow.beneficiary.dto.BeneficiaryResponse;
 import com.ledgerflow.beneficiary.dto.CreateBeneficiaryRequest;
 import com.ledgerflow.user.User;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.util.List;
 
 @Service
 public class BeneficiaryService {
@@ -55,6 +57,22 @@ public class BeneficiaryService {
                 saved.getStatus(),
                 saved.getCreatedAt()
         );
+    }
+
+    @Transactional(readOnly = true)
+    public List<BeneficiaryResponse> getBeneficiaries(User user) {
+
+        return beneficiaryRepository.findByUser(user)
+                .stream()
+                .map(beneficiary -> new BeneficiaryResponse(
+                        beneficiary.getId(),
+                        beneficiary.getBeneficiaryName(),
+                        beneficiary.getAccountNumber(),
+                        beneficiary.getBankName(),
+                        beneficiary.getStatus(),
+                        beneficiary.getCreatedAt()
+                ))
+                .toList();
     }
 
 
