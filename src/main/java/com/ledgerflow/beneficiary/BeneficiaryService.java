@@ -75,5 +75,32 @@ public class BeneficiaryService {
                 .toList();
     }
 
+    @Transactional
+    public void deactivateBeneficiary(Long id, User user) {
+
+        Beneficiary beneficiary = beneficiaryRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Beneficiary not found"
+                ));
+
+        if (!beneficiary.getUser().getId().equals(user.getId())) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "Beneficiary not found"
+            );
+        }
+
+        if ("INACTIVE".equals(beneficiary.getStatus())) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Beneficiary is already inactive"
+            );
+        }
+
+        beneficiary.setStatus("INACTIVE");
+        beneficiaryRepository.save(beneficiary);
+    }
+
 
 }

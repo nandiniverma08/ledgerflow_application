@@ -10,6 +10,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/beneficiaries")
 public class BeneficiaryController {
@@ -43,7 +45,7 @@ public class BeneficiaryController {
     }
 
     @GetMapping
-    public java.util.List<BeneficiaryResponse> getBeneficiaries(
+    public List<BeneficiaryResponse> getBeneficiaries(
             Authentication authentication
     ) {
         String email = authentication.getName();
@@ -55,5 +57,22 @@ public class BeneficiaryController {
                 ));
 
         return beneficiaryService.getBeneficiaries(user);
+    }
+
+    @PatchMapping("/{id}/deactivate")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deactivateBeneficiary(
+            @PathVariable Long id,
+            Authentication authentication
+    ) {
+        String email = authentication.getName();
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "User not found"
+                ));
+
+        beneficiaryService.deactivateBeneficiary(id, user);
     }
 }
