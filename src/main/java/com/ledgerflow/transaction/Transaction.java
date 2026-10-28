@@ -11,7 +11,15 @@ import java.time.Instant;
 @Getter
 @Setter
 @Entity
-@Table(name = "transactions")
+@Table(
+        name = "transactions",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_transaction_idempotency_key",
+                        columnNames = {"idempotency_key"}
+                )
+        }
+)
 public class Transaction {
 
     @Id
@@ -20,6 +28,9 @@ public class Transaction {
 
     @Column(name = "reference_number", nullable = false, unique = true, length = 50)
     private String referenceNumber;
+
+    @Column(name = "idempotency_key", nullable = false, length = 100)
+    private String idempotencyKey;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "sender_account_id", nullable = false)

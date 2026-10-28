@@ -2,15 +2,21 @@ package com.ledgerflow.common.exception;
 
 import com.ledgerflow.common.dto.ApiResponse;
 import jakarta.validation.ConstraintViolationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger log =
+            LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(EmailAlreadyRegisteredException.class)
     public ResponseEntity<ApiResponse<Void>> handleDuplicateEmail(
@@ -22,7 +28,7 @@ public class GlobalExceptionHandler {
                 null,
                 java.time.Instant.now()
         );
-
+        log.error("Unexpected server error", ex);
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
                 .body(response);
@@ -46,7 +52,7 @@ public class GlobalExceptionHandler {
                 null,
                 java.time.Instant.now()
         );
-
+        log.error("Unexpected server error", ex);
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(response);
@@ -62,7 +68,7 @@ public class GlobalExceptionHandler {
                 null,
                 java.time.Instant.now()
         );
-
+        log.error("Unexpected server error", ex);
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(response);
@@ -78,7 +84,7 @@ public class GlobalExceptionHandler {
                 null,
                 java.time.Instant.now()
         );
-
+        log.error("Unexpected server error", ex);
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(response);
@@ -94,7 +100,7 @@ public class GlobalExceptionHandler {
                 null,
                 java.time.Instant.now()
         );
-
+        log.error("Unexpected server error", ex);
         return ResponseEntity
                 .status(HttpStatus.UNAUTHORIZED)
                 .body(response);
@@ -111,9 +117,25 @@ public class GlobalExceptionHandler {
                 null,
                 java.time.Instant.now()
         );
-
+        log.error("Unexpected server error", ex);
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(response);
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<ApiResponse<Void>> handleResponseStatusException(
+            ResponseStatusException ex
+    ) {
+        ApiResponse<Void> response = new ApiResponse<>(
+                false,
+                ex.getReason(),
+                null,
+                java.time.Instant.now()
+        );
+
+        return ResponseEntity
+                .status(ex.getStatusCode())
                 .body(response);
     }
 }
