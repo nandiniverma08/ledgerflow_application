@@ -9,4 +9,5 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     boolean existsByReferenceNumber(String referenceNumber);
 
     Optional<Transaction> findByIdempotencyKey(String idempotencyKey);
+
 }
