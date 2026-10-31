@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -168,5 +169,28 @@ public class TransactionService {
                 transaction.getDescription(),
                 transaction.getCreatedAt()
         );
+    }
+
+    @Transactional
+    public List<TransactionResponse> getTransactionHistory(String email) {
+
+        // 1. Find logged-in user
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.UNAUTHORIZED,
+                        "Authenticated user not found"
+                ));
+
+        // 2. Fetch all sent and received transactions
+        List<Transaction> transactions =
+                transactionRepository
+                        .findBySenderAccount_UserOrReceiverAccount_UserOrderByCreatedAtDesc(
+                                user, user
+                        );
+
+        // 3. Convert Transaction entities into DTOs
+        return transactions.stream()
+                .map(this::toResponse)
+                .toList();
     }
 }

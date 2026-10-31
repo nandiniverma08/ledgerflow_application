@@ -8,6 +8,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/transactions")
 public class TransactionController {
@@ -25,5 +27,12 @@ public class TransactionController {
             @Valid @RequestBody CreateTransferRequest request
     ) {
         return transactionService.createTransfer(email, request);
+    }
+
+    @GetMapping
+    public List<TransactionResponse> getTransactionHistory(
+            @AuthenticationPrincipal String email) {
+
+        return transactionService.getTransactionHistory(email);
     }
 }
