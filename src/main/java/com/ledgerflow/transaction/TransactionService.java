@@ -193,4 +193,25 @@ public class TransactionService {
                 .map(this::toResponse)
                 .toList();
     }
+
+    @Transactional
+    public TransactionResponse getTransactionByReference(
+            String email,
+            String referenceNumber) {
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.UNAUTHORIZED,
+                        "Authenticated user not found"
+                ));
+
+        Transaction transaction = transactionRepository
+                .findByReferenceNumberAndUser(referenceNumber, user.getId())
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Transaction not found"
+                ));
+
+        return toResponse(transaction);
+    }
 }

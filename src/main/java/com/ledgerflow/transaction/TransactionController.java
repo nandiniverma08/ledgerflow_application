@@ -35,4 +35,14 @@ public class TransactionController {
 
         return transactionService.getTransactionHistory(email);
     }
+
+    @GetMapping("/{referenceNumber}")
+    public TransactionResponse getTransactionByReference(
+            @AuthenticationPrincipal String email,
+            @PathVariable String referenceNumber) {
+
+        return transactionService.getTransactionByReference(
+                email, referenceNumber
+        );
+    }
 }
