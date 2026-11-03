@@ -4,6 +4,7 @@ import com.ledgerflow.transaction.dto.CreateTransferRequest;
 import com.ledgerflow.transaction.dto.TransactionResponse;
 import com.ledgerflow.user.User;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -30,10 +31,12 @@ public class TransactionController {
     }
 
     @GetMapping
-    public List<TransactionResponse> getTransactionHistory(
-            @AuthenticationPrincipal String email) {
+    public Page<TransactionResponse> getTransactionHistory(
+            @AuthenticationPrincipal String email,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
 
-        return transactionService.getTransactionHistory(email);
+        return transactionService.getTransactionHistory(email, page, size);
     }
 
     @GetMapping("/{referenceNumber}")

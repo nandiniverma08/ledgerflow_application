@@ -7,6 +7,9 @@ import com.ledgerflow.transaction.dto.TransactionResponse;
 import com.ledgerflow.user.User;
 import com.ledgerflow.user.UserRepository;
 import jakarta.transaction.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -172,26 +175,24 @@ public class TransactionService {
     }
 
     @Transactional
-    public List<TransactionResponse> getTransactionHistory(String email) {
+    public Page<TransactionResponse> getTransactionHistory(
+            String email, int page, int size) {
 
-        // 1. Find logged-in user
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.UNAUTHORIZED,
                         "Authenticated user not found"
                 ));
 
-        // 2. Fetch all sent and received transactions
-        List<Transaction> transactions =
+        Pageable pageable = PageRequest.of(page, size);
+
+        Page<Transaction> transactions =
                 transactionRepository
                         .findBySenderAccount_UserOrReceiverAccount_UserOrderByCreatedAtDesc(
-                                user, user
+                                user, user, pageable
                         );
 
-        // 3. Convert Transaction entities into DTOs
-        return transactions.stream()
-                .map(this::toResponse)
-                .toList();
+        return transactions.map(this::toResponse);
     }
 
     @Transactional

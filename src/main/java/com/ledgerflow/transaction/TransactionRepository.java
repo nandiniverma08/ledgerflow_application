@@ -1,6 +1,8 @@
 package com.ledgerflow.transaction;
 
 import com.ledgerflow.user.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,10 +16,10 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 
     Optional<Transaction> findByIdempotencyKey(String idempotencyKey);
 
-    List<Transaction>
-    findBySenderAccount_UserOrReceiverAccount_UserOrderByCreatedAtDesc(
+    Page<Transaction> findBySenderAccount_UserOrReceiverAccount_UserOrderByCreatedAtDesc(
             User senderUser,
-            User receiverUser
+            User receiverUser,
+            Pageable pageable
     );
 
     @Query(value = """
