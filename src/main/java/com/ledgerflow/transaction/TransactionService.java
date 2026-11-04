@@ -15,6 +15,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -176,7 +179,11 @@ public class TransactionService {
 
     @Transactional
     public Page<TransactionResponse> getTransactionHistory(
-            String email, int page, int size) {
+            String email,
+            int page,
+            int size,
+            LocalDate fromDate,
+            LocalDate toDate) {
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(
@@ -186,11 +193,53 @@ public class TransactionService {
 
         Pageable pageable = PageRequest.of(page, size);
 
-        Page<Transaction> transactions =
-                transactionRepository
-                        .findBySenderAccount_UserOrReceiverAccount_UserOrderByCreatedAtDesc(
-                                user, user, pageable
-                        );
+        Page<Transaction> transactions;
+
+        // No date filter: fetch complete transaction history
+        if (fromDate == null && toDate == null) {
+
+            transactions = transactionRepository
+                    .findBySenderAccount_UserOrReceiverAccount_UserOrderByCreatedAtDesc(
+                            user, user, pageable
+                    );
+
+        } else {
+
+            // Both dates must be provided together
+            if (fromDate == null || toDate == null) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Both fromDate and toDate must be provided"
+                );
+            }
+
+            // Validate date range
+            if (fromDate.isAfter(toDate)) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "fromDate cannot be after toDate"
+                );
+            }
+
+            ZoneId zone = ZoneId.of("Asia/Kolkata");
+
+            Instant startDate = fromDate
+                    .atStartOfDay(zone)
+                    .toInstant();
+
+            Instant endDate = toDate
+                    .plusDays(1)
+                    .atStartOfDay(zone)
+                    .toInstant();
+
+            transactions = transactionRepository
+                    .findByUserAndDateRange(
+                            user,
+                            startDate,
+                            endDate,
+                            pageable
+                    );
+        }
 
         return transactions.map(this::toResponse);
     }

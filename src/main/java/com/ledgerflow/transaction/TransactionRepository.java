@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -36,6 +37,20 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     Optional<Transaction> findByReferenceNumberAndUser(
             @Param("referenceNumber") String referenceNumber,
             @Param("userId") Long userId
+    );
+
+    @Query("""
+    SELECT t FROM Transaction t
+    WHERE (t.senderAccount.user = :user OR t.receiverAccount.user = :user)
+    AND t.createdAt >= :startDate
+    AND t.createdAt < :endDate
+    ORDER BY t.createdAt DESC
+""")
+    Page<Transaction> findByUserAndDateRange(
+            @Param("user") User user,
+            @Param("startDate") Instant startDate,
+            @Param("endDate") Instant endDate,
+            Pageable pageable
     );
 
 }

@@ -7,11 +7,13 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import org.springframework.data.domain.Page;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Validated
@@ -37,13 +39,27 @@ public class TransactionController {
     @GetMapping
     public Page<TransactionResponse> getTransactionHistory(
             @AuthenticationPrincipal String email,
-            @Min(0)
-            @RequestParam(defaultValue = "0") int page,
-            @Min(1)
-            @Max(100)
-            @RequestParam(defaultValue = "10") int size) {
 
-        return transactionService.getTransactionHistory(email, page, size);
+            @RequestParam(defaultValue = "0") int page,
+
+            @RequestParam(defaultValue = "10") int size,
+
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate fromDate,
+
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate toDate
+    ) {
+
+        return transactionService.getTransactionHistory(
+                email,
+                page,
+                size,
+                fromDate,
+                toDate
+        );
     }
 
     @GetMapping("/{referenceNumber}")
