@@ -53,4 +53,29 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
             Pageable pageable
     );
 
+    @Query("""
+    SELECT t FROM Transaction t
+    WHERE
+        (
+            (:transactionType = 'SENT' AND t.senderAccount.user = :user)
+            OR
+            (:transactionType = 'RECEIVED' AND t.receiverAccount.user = :user)
+            OR
+            (:transactionType = 'ALL' AND
+                (t.senderAccount.user = :user OR t.receiverAccount.user = :user))
+        )
+        AND (:status IS NULL OR t.status = :status)
+        AND t.createdAt >= :startDate
+        AND t.createdAt < :endDate
+    ORDER BY t.createdAt DESC
+""")
+    Page<Transaction> findTransactionsWithFilters(
+            @Param("user") User user,
+            @Param("transactionType") String transactionType,
+            @Param("status") String status,
+            @Param("startDate") Instant startDate,
+            @Param("endDate") Instant endDate,
+            Pageable pageable
+    );
+
 }

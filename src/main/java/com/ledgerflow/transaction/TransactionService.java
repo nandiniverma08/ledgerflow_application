@@ -19,6 +19,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -183,7 +184,9 @@ public class TransactionService {
             int page,
             int size,
             LocalDate fromDate,
-            LocalDate toDate) {
+            LocalDate toDate,
+            String status,
+            String transactionType) {
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(
@@ -191,55 +194,72 @@ public class TransactionService {
                         "Authenticated user not found"
                 ));
 
-        Pageable pageable = PageRequest.of(page, size);
+        // Validate date range
+        if ((fromDate == null) != (toDate == null)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Both fromDate and toDate must be provided"
+            );
+        }
 
-        Page<Transaction> transactions;
+        if (fromDate != null && fromDate.isAfter(toDate)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "fromDate cannot be after toDate"
+            );
+        }
 
-        // No date filter: fetch complete transaction history
-        if (fromDate == null && toDate == null) {
+        // Validate status
+        if (status != null) {
+            status = status.toUpperCase(Locale.ROOT);
 
-            transactions = transactionRepository
-                    .findBySenderAccount_UserOrReceiverAccount_UserOrderByCreatedAtDesc(
-                            user, user, pageable
-                    );
+            if (!List.of("COMPLETED", "PENDING", "FAILED").contains(status)) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Invalid transaction status"
+                );
+            }
+        }
 
+        // Validate transaction type
+        if (transactionType == null) {
+            transactionType = "ALL";
         } else {
+            transactionType = transactionType.toUpperCase(Locale.ROOT);
+        }
 
-            // Both dates must be provided together
-            if (fromDate == null || toDate == null) {
-                throw new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST,
-                        "Both fromDate and toDate must be provided"
-                );
-            }
+        if (!List.of("SENT", "RECEIVED", "ALL").contains(transactionType)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Invalid transaction type"
+            );
+        }
 
-            // Validate date range
-            if (fromDate.isAfter(toDate)) {
-                throw new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST,
-                        "fromDate cannot be after toDate"
-                );
-            }
+        // Convert dates into Instants
+        Instant startDate = null;
+        Instant endDate = null;
 
+        if (fromDate != null) {
             ZoneId zone = ZoneId.of("Asia/Kolkata");
 
-            Instant startDate = fromDate
+            startDate = fromDate.atStartOfDay(zone).toInstant();
+
+            endDate = toDate.plusDays(1)
                     .atStartOfDay(zone)
                     .toInstant();
-
-            Instant endDate = toDate
-                    .plusDays(1)
-                    .atStartOfDay(zone)
-                    .toInstant();
-
-            transactions = transactionRepository
-                    .findByUserAndDateRange(
-                            user,
-                            startDate,
-                            endDate,
-                            pageable
-                    );
         }
+
+        Pageable pageable = PageRequest.of(page, size);
+
+        Page<Transaction> transactions =
+                transactionRepository.findTransactionsWithFilters(
+                        user,
+                        transactionType,
+                        status,
+                        startDate,
+                        endDate,
+                        pageable
+                );
 
         return transactions.map(this::toResponse);
     }

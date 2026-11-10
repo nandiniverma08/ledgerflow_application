@@ -50,15 +50,22 @@ public class TransactionController {
 
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-            LocalDate toDate
-    ) {
+            LocalDate toDate,
 
+            @RequestParam(required = false)
+            String status,
+
+            @RequestParam(defaultValue = "ALL")
+            String transactionType
+    ) {
         return transactionService.getTransactionHistory(
                 email,
                 page,
                 size,
                 fromDate,
-                toDate
+                toDate,
+                status,
+                transactionType
         );
     }
 
