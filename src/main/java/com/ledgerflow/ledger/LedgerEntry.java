@@ -26,8 +26,9 @@ public class LedgerEntry {
     @JoinColumn(name = "account_id", nullable = false)
     private Account account;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "entry_type", nullable = false, length = 10)
-    private String entryType;
+    private LedgerEntryType entryType;
 
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal amount;

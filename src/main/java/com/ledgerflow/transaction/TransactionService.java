@@ -2,6 +2,9 @@ package com.ledgerflow.transaction;
 
 import com.ledgerflow.account.Account;
 import com.ledgerflow.account.AccountRepository;
+import com.ledgerflow.ledger.LedgerEntry;
+import com.ledgerflow.ledger.LedgerEntryRepository;
+import com.ledgerflow.ledger.LedgerEntryType;
 import com.ledgerflow.transaction.dto.CreateTransferRequest;
 import com.ledgerflow.transaction.dto.TransactionResponse;
 import com.ledgerflow.user.User;
@@ -29,15 +32,18 @@ public class TransactionService {
     private final TransactionRepository transactionRepository;
     private final AccountRepository accountRepository;
     private final UserRepository userRepository;
+    private final LedgerEntryRepository ledgerEntryRepository;
 
     public TransactionService(
             TransactionRepository transactionRepository,
             AccountRepository accountRepository,
-            UserRepository userRepository
+            UserRepository userRepository,
+            LedgerEntryRepository ledgerEntryRepository
     ) {
         this.transactionRepository = transactionRepository;
         this.accountRepository = accountRepository;
         this.userRepository = userRepository;
+        this.ledgerEntryRepository = ledgerEntryRepository;
     }
 
     @Transactional
@@ -153,10 +159,31 @@ public class TransactionService {
         transaction.setStatus("COMPLETED");
         transaction.setDescription(request.description());
 
-        // 9. Save and return the transaction
+
+        // 9. Save the transaction
         Transaction saved = transactionRepository.save(transaction);
 
+        // 10. Create DEBIT entry for sender
+        LedgerEntry debitEntry = new LedgerEntry();
+        debitEntry.setTransaction(saved);
+        debitEntry.setAccount(sender);
+        debitEntry.setEntryType(LedgerEntryType.DEBIT);
+        debitEntry.setAmount(saved.getAmount());
+
+        // 11. Create CREDIT entry for receiver
+        LedgerEntry creditEntry = new LedgerEntry();
+        creditEntry.setTransaction(saved);
+        creditEntry.setAccount(receiver);
+        creditEntry.setEntryType(LedgerEntryType.CREDIT);
+        creditEntry.setAmount(saved.getAmount());
+
+        // 12. Save both ledger entries
+        ledgerEntryRepository.saveAll(
+                List.of(debitEntry, creditEntry)
+        );
+
         return toResponse(saved);
+
     }
 
     private String generateReferenceNumber() {
