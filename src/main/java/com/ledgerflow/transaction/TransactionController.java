@@ -1,11 +1,13 @@
 package com.ledgerflow.transaction;
 
+import com.ledgerflow.ledger.dto.TransactionLedgerResponse;
 import com.ledgerflow.transaction.dto.CreateTransferRequest;
 import com.ledgerflow.transaction.dto.TransactionResponse;
 import com.ledgerflow.user.User;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import org.hibernate.Transaction;
 import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -77,5 +79,13 @@ public class TransactionController {
         return transactionService.getTransactionByReference(
                 email, referenceNumber
         );
+    }
+
+    @GetMapping("/{referenceNumber}/ledger")
+    public TransactionLedgerResponse getTransactionLedger(
+            @AuthenticationPrincipal String email,
+            @PathVariable String referenceNumber
+    ) {
+        return transactionService.getTransactionLedger(email, referenceNumber);
     }
 }

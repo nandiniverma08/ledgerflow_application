@@ -5,6 +5,8 @@ import com.ledgerflow.account.AccountRepository;
 import com.ledgerflow.ledger.LedgerEntry;
 import com.ledgerflow.ledger.LedgerEntryRepository;
 import com.ledgerflow.ledger.LedgerEntryType;
+import com.ledgerflow.ledger.dto.LedgerEntryResponse;
+import com.ledgerflow.ledger.dto.TransactionLedgerResponse;
 import com.ledgerflow.transaction.dto.CreateTransferRequest;
 import com.ledgerflow.transaction.dto.TransactionResponse;
 import com.ledgerflow.user.User;
@@ -310,5 +312,48 @@ public class TransactionService {
                 ));
 
         return toResponse(transaction);
+    }
+
+    @Transactional
+    public TransactionLedgerResponse getTransactionLedger(
+            String email,
+            String referenceNumber
+    ) {
+
+        // 1. Find authenticated user
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.UNAUTHORIZED,
+                        "Authenticated user not found"
+                ));
+
+        // 2. Find transaction and verify ownership
+        Transaction transaction = transactionRepository
+                .findByReferenceNumberAndUser(referenceNumber, user.getId())
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Transaction not found"
+                ));
+
+        // 3. Fetch all ledger entries for this transaction
+        List<LedgerEntry> ledgerEntries =
+                ledgerEntryRepository.findByTransactionOrderByCreatedAtAsc(transaction);
+
+        // 4. Convert LedgerEntry entities into DTOs
+        List<LedgerEntryResponse> entryResponses = ledgerEntries.stream()
+                .map(entry -> new LedgerEntryResponse(
+                        entry.getAccount().getAccountNumber(),
+                        entry.getEntryType().name(),
+                        entry.getAmount(),
+                        entry.getCreatedAt()
+                ))
+                .toList();
+
+        // 5. Return combined response
+        return new TransactionLedgerResponse(
+                transaction.getReferenceNumber(),
+                transaction.getAmount(),
+                entryResponses
+        );
     }
 }
