@@ -1,5 +1,6 @@
 package com.ledgerflow.ledger;
 
+import com.ledgerflow.ledger.dto.AccountLedgerSummaryResponse;
 import com.ledgerflow.ledger.dto.LedgerEntryResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -27,6 +28,17 @@ public class LedgerController {
                 accountNumber,
                 page,
                 size
+        );
+    }
+
+    @GetMapping("/{accountNumber}/ledger/summary")
+    public AccountLedgerSummaryResponse getAccountLedgerSummary(
+            @AuthenticationPrincipal String email,
+            @PathVariable String accountNumber
+    ) {
+        return ledgerService.fetchAccountLedgerSummary(
+                email,
+                accountNumber
         );
     }
 }
