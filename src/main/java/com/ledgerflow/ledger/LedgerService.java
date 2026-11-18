@@ -15,6 +15,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 
 
@@ -36,7 +39,9 @@ public class LedgerService {
             String email,
             String accountNumber,
             int page,
-            int size
+            int size,
+            LocalDate fromDate,
+            LocalDate toDate
     ) {
 
         // 1. Find authenticated user
@@ -54,14 +59,42 @@ public class LedgerService {
                         "Account not found"
                 ));
 
-        // 3. Create pagination request
+        // 3. Validate dates
+        if ((fromDate == null) != (toDate == null)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Both fromDate and toDate must be provided"
+            );
+        }
+
+        if (fromDate != null && fromDate.isAfter(toDate)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "fromDate cannot be after toDate"
+            );
+        }
+
+// 4. Create pagination request
         Pageable pageable = PageRequest.of(page, size);
 
-        // 4. Fetch account ledger entries
-        Page<LedgerEntry> entries =
-                ledgerEntryRepository.findByAccountOrderByCreatedAtDesc(
-                        account, pageable
-                );
+// 5. Fetch account ledger entries
+        Page<LedgerEntry> entries;
+
+        if (fromDate == null) {
+            // No date filter: fetch all entries
+            entries = ledgerEntryRepository.findByAccountOrderByCreatedAtDesc(
+                    account, pageable
+            );
+        } else {
+            ZoneId zone = ZoneId.of("Asia/Kolkata");
+
+            Instant startDate = fromDate.atStartOfDay(zone).toInstant();
+            Instant endDate = toDate.plusDays(1).atStartOfDay(zone).toInstant();
+
+            entries = ledgerEntryRepository.findAccountLedgerByDateRange(
+                    account, startDate, endDate, pageable
+            );
+        }
 
         // 5. Convert Entity to DTO
         return entries.map(ledgerEntry -> new LedgerEntryResponse(

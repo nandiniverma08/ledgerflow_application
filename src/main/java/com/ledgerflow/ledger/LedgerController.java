@@ -3,8 +3,11 @@ package com.ledgerflow.ledger;
 import com.ledgerflow.ledger.dto.AccountLedgerSummaryResponse;
 import com.ledgerflow.ledger.dto.LedgerEntryResponse;
 import org.springframework.data.domain.Page;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("api/v1/accounts")
@@ -21,13 +24,16 @@ public class LedgerController {
             @AuthenticationPrincipal String email,
             @PathVariable String accountNumber,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate fromDate,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate toDate
     ) {
         return ledgerService.getLedgerEntriesByAccount(
-                email,
-                accountNumber,
-                page,
-                size
+                email, accountNumber, page, size, fromDate, toDate
         );
     }
 

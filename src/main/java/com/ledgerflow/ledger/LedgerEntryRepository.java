@@ -9,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.Instant;
 import java.util.List;
 
 public interface LedgerEntryRepository extends JpaRepository<LedgerEntry, Long> {
@@ -30,4 +31,18 @@ public interface LedgerEntryRepository extends JpaRepository<LedgerEntry, Long> 
     WHERE le.account = :account
 """)
     List<Object[]> calculateAccountLedgerSummary(@Param("account") Account account);
+
+    @Query("""
+    SELECT le FROM LedgerEntry le
+    WHERE le.account = :account
+    AND le.createdAt >= :startDate
+    AND le.createdAt < :endDate
+    ORDER BY le.createdAt DESC
+""")
+    Page<LedgerEntry> findAccountLedgerByDateRange(
+            @Param("account") Account account,
+            @Param("startDate") Instant startDate,
+            @Param("endDate") Instant endDate,
+            Pageable pageable
+    );
 }
