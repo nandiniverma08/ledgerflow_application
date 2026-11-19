@@ -1,6 +1,7 @@
 package com.ledgerflow.ledger;
 
 import com.ledgerflow.ledger.dto.AccountLedgerSummaryResponse;
+import com.ledgerflow.ledger.dto.AccountStatementResponse;
 import com.ledgerflow.ledger.dto.LedgerEntryResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -46,5 +47,13 @@ public class LedgerController {
                 email,
                 accountNumber
         );
+    }
+
+    @GetMapping("/{accountNumber}/statement")
+    public AccountStatementResponse getAccountStatement(
+            @AuthenticationPrincipal String email,
+            @PathVariable String accountNumber
+    ) {
+        return ledgerService.getAccountStatement(email, accountNumber);
     }
 }

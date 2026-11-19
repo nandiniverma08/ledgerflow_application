@@ -45,4 +45,14 @@ public interface LedgerEntryRepository extends JpaRepository<LedgerEntry, Long> 
             @Param("endDate") Instant endDate,
             Pageable pageable
     );
+
+    @Query("""
+    SELECT le FROM LedgerEntry le
+    JOIN FETCH le.transaction
+    WHERE le.account = :account
+    ORDER BY le.createdAt ASC
+""")
+    List<LedgerEntry> findStatementEntriesByAccount(
+            @Param("account") Account account
+    );
 }

@@ -3,6 +3,7 @@ package com.ledgerflow.ledger;
 import com.ledgerflow.account.Account;
 import com.ledgerflow.account.AccountRepository;
 import com.ledgerflow.ledger.dto.AccountLedgerSummaryResponse;
+import com.ledgerflow.ledger.dto.AccountStatementResponse;
 import com.ledgerflow.ledger.dto.LedgerEntryResponse;
 import com.ledgerflow.user.User;
 import com.ledgerflow.user.UserRepository;
@@ -145,6 +146,78 @@ public class LedgerService {
                 totalCredits,
                 totalDebits,
                 netMovement
+        );
+    }
+
+    @Transactional
+    public AccountStatementResponse getAccountStatement(
+            String email,
+            String accountNumber
+    ) {
+        // 1. Find authenticated user
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.UNAUTHORIZED,
+                        "User not found"
+                ));
+
+        // 2. Find account and verify ownership
+        Account account = accountRepository
+                .findByAccountNumberAndUser(accountNumber, user)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Account not found"
+                ));
+
+        // 3. Fetch all ledger entries in chronological order
+        List<LedgerEntry> entries =
+                ledgerEntryRepository.findStatementEntriesByAccount(account);
+
+        // 4. Calculate total net movement from ledger entries
+        BigDecimal netMovement = BigDecimal.ZERO;
+
+        for (LedgerEntry entry : entries) {
+            if (entry.getEntryType() == LedgerEntryType.CREDIT) {
+                netMovement = netMovement.add(entry.getAmount());
+            } else {
+                netMovement = netMovement.subtract(entry.getAmount());
+            }
+        }
+
+        // 5. Reconstruct the balance before the first ledger entry
+        BigDecimal runningBalance = account.getBalance().subtract(netMovement);
+
+        // 6. Build statement rows
+        List<AccountStatementResponse.StatementEntry> statement =
+                new java.util.ArrayList<>();
+
+        for (LedgerEntry entry : entries) {
+
+            BigDecimal debit = BigDecimal.ZERO;
+            BigDecimal credit = BigDecimal.ZERO;
+
+            if (entry.getEntryType() == LedgerEntryType.DEBIT) {
+                debit = entry.getAmount();
+                runningBalance = runningBalance.subtract(debit);
+            } else {
+                credit = entry.getAmount();
+                runningBalance = runningBalance.add(credit);
+            }
+
+            statement.add(new AccountStatementResponse.StatementEntry(
+                    entry.getCreatedAt(),
+                    entry.getTransaction().getReferenceNumber(),
+                    entry.getTransaction().getDescription(),
+                    debit,
+                    credit,
+                    runningBalance
+            ));
+        }
+
+        // 7. Return complete account statement
+        return new AccountStatementResponse(
+                account.getAccountNumber(),
+                statement
         );
     }
 
