@@ -1,24 +1,33 @@
 package com.ledgerflow.security;
 
+import com.ledgerflow.user.User;
+import com.ledgerflow.user.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.List;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
+    private final UserRepository userRepository;
 
-    public JwtAuthenticationFilter(JwtService jwtService) {
+    public JwtAuthenticationFilter(
+            JwtService jwtService,
+            UserRepository userRepository
+    ) {
         this.jwtService = jwtService;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -45,11 +54,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     .getAuthentication() == null
                     && jwtService.isTokenValid(token, email)) {
 
+                User user = userRepository.findByEmail(email)
+                        .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+                String role = "ROLE_" + user.getRole().name();
+
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(
                                 email,
                                 null,
-                                java.util.Collections.emptyList()
+                                List.of(new SimpleGrantedAuthority(role))
                         );
 
                 authentication.setDetails(
