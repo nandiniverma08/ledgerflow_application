@@ -2,9 +2,11 @@ package com.ledgerflow.admin;
 
 import com.ledgerflow.admin.dto.AdminAccountResponse;
 import com.ledgerflow.admin.dto.AdminUserResponse;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import com.ledgerflow.admin.dto.FreezeAccountRequest;
+import com.ledgerflow.admin.dto.FreezeAccountResponse;
+import jakarta.validation.Valid;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -26,5 +28,18 @@ public class AdminController {
     @GetMapping("/accounts")
     public List<AdminAccountResponse> getAllAccounts() {
         return adminService.getAllAccounts();
+    }
+
+    @PatchMapping("/accounts/{accountNumber}/freeze")
+    public FreezeAccountResponse freezeAccount(
+            @PathVariable String accountNumber,
+            @Valid @RequestBody FreezeAccountRequest request,
+            Authentication authentication) {
+
+        return adminService.freezeByAccountNumber(
+                accountNumber,
+                request.reason(),
+                authentication.getName()
+        );
     }
 }
